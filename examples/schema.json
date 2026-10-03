@@ -1,0 +1,8 @@
+{
+  "timestamp": "ts",
+  "open": "o",
+  "high": "h",
+  "low": "l",
+  "close": "c",
+  "volume": "qty"
+}

@@ -1,0 +1,25 @@
+name: Feature request
+description: Propose a strategy-independent research-integrity check
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: failure_mode
+    attributes:
+      label: Integrity failure mode
+      description: What class of backtest or data error should be detectable?
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected fail-closed behavior
+      description: Describe the machine-checkable rule and expected finding code.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Minimal synthetic example
+      description: Provide a small synthetic example if possible.

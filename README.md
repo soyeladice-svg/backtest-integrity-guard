@@ -2,76 +2,118 @@
 
 [![tests](https://github.com/suguobin2021/backtest-integrity-guard/actions/workflows/test.yml/badge.svg)](https://github.com/suguobin2021/backtest-integrity-guard/actions/workflows/test.yml)
 
-A small, dependency-free Python CLI for detecting common integrity failures in quantitative backtests before performance metrics are trusted.
+A small, dependency-free Python CLI for catching common integrity failures in quantitative backtests before performance metrics are trusted.
 
-## What it checks
-
-- OHLC geometry and negative/invalid volume
-- duplicate or non-monotonic timestamps
-- timezone-aware timestamps
-- incomplete-bar markers
-- signal-close -> execution ordering
-- next-bar execution constraints
-- same-bar stop/target ambiguity
-- SHA256 manifests for frozen research inputs
-
-It does **not** implement a trading strategy and does not contain market data.
+It focuses on **causality, data integrity, explicit ambiguity handling, and reproducibility**. It does not implement trading signals or ship market data.
 
 ## Install
 
-```bash
+### From the v0.2.1 release wheel
+
+~~~bash
+python -m pip install "https://github.com/suguobin2021/backtest-integrity-guard/releases/download/v0.2.1/backtest_integrity_guard-0.2.1-py3-none-any.whl"
+btguard --help
+~~~
+
+The release also includes a source archive and SHA256SUMS.
+
+### From source
+
+~~~bash
+git clone https://github.com/suguobin2021/backtest-integrity-guard.git
+cd backtest-integrity-guard
 python -m pip install -e .
-```
+~~~
 
-## Examples
+## Quick start
 
-```bash
-btguard ohlcv examples/ohlcv.csv
-btguard ohlcv vendor.csv --map schema.json
-btguard ohlcv bars.csv --interval-seconds 300 --allow-gaps allowed_gaps.json
-btguard ohlcv bars.csv --hash-input
-btguard ledger examples/trades.csv
+Audit ordinary OHLCV data:
+
+~~~bash
+btguard ohlcv examples/ohlcv.csv --hash-input
+~~~
+
+Audit vendor-specific column names:
+
+~~~bash
+btguard ohlcv examples/vendor.csv --map examples/schema.json
+~~~
+
+Check a 5-minute cadence while explicitly allowing a known session break:
+
+~~~bash
+btguard ohlcv examples/session_gap.csv \
+  --interval-seconds 300 \
+  --allow-gaps examples/allowed_gaps.json
+~~~
+
+Audit signal-to-execution timing:
+
+~~~bash
+btguard ledger examples/trades.csv --hash-input
+~~~
+
+Freeze and verify research inputs:
+
+~~~bash
 btguard freeze examples/ohlcv.csv examples/trades.csv -o manifest.json --root .
 btguard verify manifest.json --root .
-```
+~~~
 
-The command exits non-zero when an integrity error is found, so it can be used in CI.
+Commands exit non-zero when an integrity error is found, so they can be used in CI.
 
-For vendor-specific schemas, pass a JSON mapping from canonical field names to input columns:
+## Output contract
+
+Audit output is deterministic JSON with a stable report schema:
 
 ~~~json
 {
-  "timestamp": "ts",
-  "open": "o",
-  "high": "h",
-  "low": "l",
-  "close": "c",
-  "volume": "qty"
+  "errors": 0,
+  "findings": [],
+  "input_sha256": "<64 hex chars>",
+  "report_schema_version": "1.0",
+  "status": "PASS",
+  "tool_version": "0.2.1",
+  "warnings": 0
 }
 ~~~
 
+Use --hash-input when a report should be bound to the exact audited file.
 
+## What it checks
 
-
-For cadence checks, declare the expected bar interval. Missing bars and irregular intervals fail the audit. Known session breaks can be allowlisted explicitly without bundling an exchange calendar:
-
-~~~json
-[
-  ["2026-01-02T16:00:00Z", "2026-01-05T09:30:00Z"]
-]
-~~~
-
-An allowlisted break is reported as ALLOWED_SESSION_GAP with warning severity while the audit remains PASS.
-
-Audit JSON uses a stable schema identifier, includes the tool version, and is serialized deterministically for byte-for-byte comparison. Use --hash-input when the report should also bind itself to the exact audited file via SHA256.
-
-## Why
-
-Backtests can look profitable while silently consuming incomplete bars, executing on the signal bar, changing frozen inputs, or resolving an intrabar stop/target collision without an explicit policy. This project makes those assumptions machine-checkable.
+- OHLC geometry and negative or invalid volume
+- duplicate and non-monotonic timestamps
+- timezone-aware timestamps
+- incomplete-bar markers
+- configurable OHLCV schema aliases
+- missing bars and irregular cadence
+- explicitly allowlisted session gaps
+- signal-close to execution ordering
+- next-bar execution constraints
+- same-bar stop/target ambiguity
+- SHA256 frozen-input manifests
+- deterministic machine-readable reports
 
 ## Scope
 
-Version 0.2 focuses on auditable data integrity: schema mapping, cadence/session checks, deterministic report output, and optional SHA256 input binding. Future versions will extend execution-integrity checks and adapters.
+Backtest Integrity Guard intentionally does **not** contain:
+- trading signals or alpha logic
+- brokerage execution code
+- proprietary or licensed market data
+- account credentials or API keys
+
+The goal is to make research assumptions machine-checkable without depending on any particular strategy.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports should include the smallest synthetic example that reproduces the problem.
+
+Useful project links:
+- [Issues](https://github.com/suguobin2021/backtest-integrity-guard/issues)
+- [Roadmap](ROADMAP.md)
+- [Changelog](CHANGELOG.md)
+- [Releases](https://github.com/suguobin2021/backtest-integrity-guard/releases)
 
 ## License
 
