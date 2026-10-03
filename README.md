@@ -77,7 +77,7 @@ Audit output is deterministic JSON with a stable report schema:
   "input_sha256": "<64 hex chars>",
   "report_schema_version": "1.0",
   "status": "PASS",
-  "tool_version": "0.2.1",
+  "tool_version": "0.2.2",
   "warnings": 0
 }
 ~~~
@@ -87,7 +87,7 @@ Use --hash-input when a report should be bound to the exact audited file.
 ## What it checks
 
 - OHLC geometry and negative or invalid volume
-- duplicate and non-monotonic timestamps
+- duplicate/conflicting and non-monotonic timestamps
 - timezone-aware timestamps
 - incomplete-bar markers
 - configurable OHLCV schema aliases

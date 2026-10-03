@@ -2,6 +2,21 @@
 
 All notable changes to Backtest Integrity Guard are documented here.
 
+## [0.2.2] - 2026-10-03
+
+### Added
+- Distinguish exact duplicate bar rows from same-timestamp OHLC(V) conflicts.
+- New finding codes: `DUPLICATE_BAR_ROW` and `TIMESTAMP_CONFLICT`.
+- Zero-setup Google Colab quickstart.
+
+### Changed
+- Duplicate diagnostics preserve the existing `DUPLICATE_TIMESTAMP` finding for compatibility.
+- Duplicate comparisons respect configured OHLCV field mappings.
+- Test suite expanded from 12 to 16 tests.
+
+### Contributors
+- Thanks to [@vansh-nagar](https://github.com/vansh-nagar) for implementing the duplicate/conflict diagnostics in PR #16.
+
 ## [0.2.1] - 2026-10-03
 
 ### Added
