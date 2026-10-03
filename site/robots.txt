@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://suguobin2021.github.io/backtest-integrity-guard/sitemap.xml

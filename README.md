@@ -4,6 +4,8 @@
 [![PyPI version](https://img.shields.io/pypi/v/backtest-integrity-guard.svg)](https://pypi.org/project/backtest-integrity-guard/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/suguobin2021/backtest-integrity-guard/blob/main/examples/quickstart.ipynb)
 
+**Project site:** https://suguobin2021.github.io/backtest-integrity-guard/
+
 A small, dependency-free Python CLI for catching common integrity failures in quantitative backtests before performance metrics are trusted.
 
 It focuses on **causality, data integrity, explicit ambiguity handling, and reproducibility**. It does not implement trading signals or ship market data.

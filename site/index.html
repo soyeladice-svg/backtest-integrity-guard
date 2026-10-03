@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Backtest Integrity Guard — Catch causal and data-integrity failures before trusting backtests</title>
+  <meta name="description" content="A dependency-free Python CLI that audits OHLCV integrity, signal-to-execution causality, same-bar ambiguity, and frozen research inputs before backtest metrics are trusted.">
+  <meta name="keywords" content="backtesting, quantitative finance, lookahead bias, OHLCV, reproducible research, algorithmic trading, Python">
+  <meta name="author" content="suguobin2021">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://suguobin2021.github.io/backtest-integrity-guard/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Backtest Integrity Guard">
+  <meta property="og:description" content="Make common backtest-integrity assumptions machine-checkable before trusting performance metrics.">
+  <meta property="og:url" content="https://suguobin2021.github.io/backtest-integrity-guard/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Backtest Integrity Guard">
+  <meta name="twitter:description" content="Audit OHLCV integrity, execution causality, same-bar ambiguity, and frozen inputs.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Backtest Integrity Guard",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Any",
+    "softwareVersion": "0.2.2",
+    "license": "https://opensource.org/licenses/MIT",
+    "url": "https://suguobin2021.github.io/backtest-integrity-guard/",
+    "downloadUrl": "https://pypi.org/project/backtest-integrity-guard/",
+    "codeRepository": "https://github.com/suguobin2021/backtest-integrity-guard",
+    "description": "Dependency-free Python CLI for auditing backtest data integrity, execution causality, same-bar ambiguity, and frozen inputs."
+  }
+  </script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0b1020;
+      --panel: #121a2e;
+      --text: #eef2ff;
+      --muted: #b9c2d8;
+      --line: #2b3755;
+      --accent: #7dd3fc;
+      --accent-2: #a7f3d0;
+      --code: #080d18;
+      --max: 1060px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font: 16px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    a { color: var(--accent); }
+    .wrap { width: min(var(--max), calc(100% - 32px)); margin: 0 auto; }
+    header { padding: 76px 0 48px; border-bottom: 1px solid var(--line); }
+    .eyebrow { color: var(--accent-2); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; font-size: .82rem; }
+    h1 { font-size: clamp(2.4rem, 6vw, 4.8rem); line-height: 1.02; margin: 10px 0 20px; max-width: 900px; }
+    h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); margin-top: 0; }
+    h3 { margin-bottom: 6px; }
+    .lead { max-width: 800px; font-size: 1.18rem; color: var(--muted); }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+    .button {
+      display: inline-block; padding: 10px 15px; border: 1px solid var(--line);
+      border-radius: 9px; text-decoration: none; font-weight: 700;
+    }
+    .button.primary { background: var(--accent); color: #07111d; border-color: var(--accent); }
+    section { padding: 52px 0; border-bottom: 1px solid var(--line); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(235px, 1fr)); gap: 16px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+    .card p { color: var(--muted); margin-bottom: 0; }
+    pre {
+      overflow-x: auto; background: var(--code); border: 1px solid var(--line);
+      border-radius: 10px; padding: 16px;
+    }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .finding { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--accent-2); font-weight: 700; }
+    .small { color: var(--muted); font-size: .92rem; }
+    footer { padding: 34px 0 60px; color: var(--muted); }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f7f9fc; --panel: #ffffff; --text: #101828; --muted: #475467;
+        --line: #d0d5dd; --accent: #0369a1; --accent-2: #047857; --code: #f2f4f7;
+      }
+      .button.primary { color: white; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="eyebrow">Open-source backtest integrity tooling</div>
+      <h1>Catch invalid assumptions before you trust the equity curve.</h1>
+      <p class="lead">
+        Backtest Integrity Guard is a dependency-free Python CLI for checking OHLCV integrity,
+        signal-to-execution causality, same-bar exit ambiguity, and frozen research inputs.
+        It is designed to sit beside your existing backtester—not replace it.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="https://pypi.org/project/backtest-integrity-guard/">Install from PyPI</a>
+        <a class="button" href="https://github.com/suguobin2021/backtest-integrity-guard">View source</a>
+        <a class="button" href="https://colab.research.google.com/github/suguobin2021/backtest-integrity-guard/blob/main/examples/quickstart.ipynb">Open in Colab</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <div class="wrap">
+        <h2>Install in one command</h2>
+        <pre><code>python -m pip install backtest-integrity-guard</code></pre>
+        <p class="small">Current release: 0.2.2 · Python 3.10+ · MIT · no runtime dependencies.</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <h2>Four failure modes worth checking first</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>Same-bar execution</h3>
+            <div class="finding">LOOKAHEAD_OR_SAME_BAR_ENTRY</div>
+            <p>Flags execution timestamps that are not causally later than the signal bar close.</p>
+          </article>
+          <article class="card">
+            <h3>Missing bars</h3>
+            <div class="finding">MISSING_BARS</div>
+            <p>Checks a declared cadence and reports undeclared gaps instead of silently accepting them.</p>
+          </article>
+          <article class="card">
+            <h3>Ambiguous exits</h3>
+            <div class="finding">AMBIGUOUS_SAME_BAR_EXIT</div>
+            <p>Fails closed when stop and target both hit inside one OHLC bar without an explicit policy.</p>
+          </article>
+          <article class="card">
+            <h3>Timestamp conflicts</h3>
+            <div class="finding">TIMESTAMP_CONFLICT</div>
+            <p>Distinguishes an exact duplicate bar from same-timestamp rows that disagree on OHLC(V).</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <h2>Quick audit</h2>
+        <pre><code># OHLCV integrity + exact input hash
+btguard ohlcv bars.csv --interval-seconds 300 --hash-input
+
+# Signal-to-execution causality
+btguard ledger trades.csv --hash-input
+
+# Freeze research inputs
+btguard freeze bars.csv trades.csv -o manifest.json --root .
+btguard verify manifest.json --root .</code></pre>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <h2>Designed for explicit, reproducible assumptions</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>Deterministic reports</h3>
+            <p>Stable JSON schema, tool version, deterministic serialization, and optional SHA256 binding to the audited file.</p>
+          </article>
+          <article class="card">
+            <h3>Vendor schemas</h3>
+            <p>Map vendor-specific timestamp/OHLCV column names without silently guessing missing fields.</p>
+          </article>
+          <article class="card">
+            <h3>Explicit session gaps</h3>
+            <p>Allow known breaks intentionally while keeping undeclared gaps fail-closed.</p>
+          </article>
+          <article class="card">
+            <h3>Framework agnostic</h3>
+            <p>Works on CSV exports from custom research code or existing backtesting engines.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <h2>What it does not claim to solve</h2>
+        <p class="lead">
+          It does not model commissions, slippage, market impact, exchange calendars, order-book fills,
+          survivorship bias, or strategy overfitting. The scope is narrower: make several common research-integrity
+          assumptions explicit, testable, and reproducible.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <h2>Read, try, or contribute</h2>
+        <div class="actions">
+          <a class="button" href="https://github.com/suguobin2021/backtest-integrity-guard/blob/main/docs/three-backtest-integrity-failures.md">Read the 3-failure guide</a>
+          <a class="button" href="https://github.com/suguobin2021/backtest-integrity-guard/issues">Issues</a>
+          <a class="button" href="https://github.com/suguobin2021/backtest-integrity-guard/releases">Releases</a>
+          <a class="button" href="https://github.com/suguobin2021/backtest-integrity-guard/blob/main/CONTRIBUTING.md">Contributing</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      Backtest Integrity Guard · MIT licensed · source and issue history are public on GitHub.
+    </div>
+  </footer>
+</body>
+</html>
