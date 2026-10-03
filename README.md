@@ -120,6 +120,7 @@ The goal is to make research assumptions machine-checkable without depending on 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports should include the smallest synthetic example that reproduces the problem.
 
 Useful project links:
+- [Discussions](https://github.com/suguobin2021/backtest-integrity-guard/discussions)
 - [Issues](https://github.com/suguobin2021/backtest-integrity-guard/issues)
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)
