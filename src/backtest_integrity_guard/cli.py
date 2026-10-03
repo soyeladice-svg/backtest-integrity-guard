@@ -5,7 +5,7 @@ import csv
 import json
 from pathlib import Path
 
-from .core import audit_ohlcv_rows, audit_trade_rows, build_manifest, verify_manifest, parse_iso8601
+from .core import audit_ohlcv_rows, audit_trade_rows, build_manifest, verify_manifest, parse_iso8601, sha256_file
 
 
 def read_csv(path: Path):
@@ -14,7 +14,7 @@ def read_csv(path: Path):
 
 
 def emit(report) -> int:
-    print(json.dumps(report.to_dict(), indent=2))
+    print(report.to_json(), end="")
     return 1 if report.errors else 0
 
 
@@ -31,12 +31,14 @@ def main() -> int:
         "--allow-gaps", type=Path,
         help="JSON list of explicit [from_timestamp, to_timestamp] session breaks",
     )
+    a.add_argument("--hash-input", action="store_true", help="Include SHA256 of the audited input")
 
     b = sub.add_parser("ledger", help="audit signal-to-execution causality")
     b.add_argument("file", type=Path)
     b.add_argument("--signal-close", default="signal_bar_close")
     b.add_argument("--entry", default="entry_time")
     b.add_argument("--next-open", default="next_bar_open")
+    b.add_argument("--hash-input", action="store_true", help="Include SHA256 of the audited input")
 
     c = sub.add_parser("freeze", help="create a SHA256 input manifest")
     c.add_argument("files", nargs="+", type=Path)
@@ -71,15 +73,21 @@ def main() -> int:
             if len(allowed_gaps) != len(raw):
                 raise SystemExit("each --allow-gaps entry must be [from_timestamp, to_timestamp]")
 
-        return emit(audit_ohlcv_rows(
+        report = audit_ohlcv_rows(
             read_csv(args.file),
             args.timestamp,
             mapping,
             args.interval_seconds,
             allowed_gaps,
-        ))
+        )
+        if args.hash_input:
+            report.input_sha256 = sha256_file(args.file)
+        return emit(report)
     if args.command == "ledger":
-        return emit(audit_trade_rows(read_csv(args.file), args.signal_close, args.entry, args.next_open))
+        report = audit_trade_rows(read_csv(args.file), args.signal_close, args.entry, args.next_open)
+        if args.hash_input:
+            report.input_sha256 = sha256_file(args.file)
+        return emit(report)
     if args.command == "freeze":
         data = build_manifest(args.files, args.root)
         args.output.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")

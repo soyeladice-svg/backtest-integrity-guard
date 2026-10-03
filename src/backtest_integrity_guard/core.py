@@ -7,6 +7,11 @@ import hashlib
 import json
 from typing import Iterable, Mapping, Any
 
+from . import __version__
+
+
+REPORT_SCHEMA_VERSION = "1.0"
+
 
 @dataclass(frozen=True)
 class Finding:
@@ -19,6 +24,7 @@ class Finding:
 @dataclass
 class AuditReport:
     findings: list[Finding]
+    input_sha256: str | None = None
 
     @property
     def errors(self) -> int:
@@ -33,12 +39,25 @@ class AuditReport:
         return "FAIL" if self.errors else "PASS"
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out: dict[str, Any] = {
+            "report_schema_version": REPORT_SCHEMA_VERSION,
+            "tool_version": __version__,
             "status": self.status,
             "errors": self.errors,
             "warnings": self.warnings,
             "findings": [asdict(x) for x in self.findings],
         }
+        if self.input_sha256 is not None:
+            out["input_sha256"] = self.input_sha256
+        return out
+
+    def to_json(self) -> str:
+        return json.dumps(
+            self.to_dict(),
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ) + "\n"
 
 
 def parse_iso8601(value: str) -> datetime:

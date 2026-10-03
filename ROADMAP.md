@@ -5,10 +5,11 @@ Backtest Integrity Guard is intentionally small. The roadmap focuses on integrit
 ## v0.2 — Data integrity
 - Configurable column aliases and schema mapping
 - Missing-bar and session-gap detection
-- Duplicate-row diagnostics beyond timestamps
 - Deterministic JSON report metadata
+- Optional SHA256 binding of audit reports to input files
 
 ## v0.3 — Execution integrity
+- Duplicate-row diagnostics beyond timestamps
 - Explicit bar-completion policies
 - Configurable next-bar execution contracts
 - Intrabar ambiguity policies with machine-readable evidence

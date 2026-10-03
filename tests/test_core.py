@@ -99,6 +99,24 @@ class IntegrityTests(unittest.TestCase):
         codes = {x.code for x in audit_trade_rows(rows).findings}
         self.assertIn("AMBIGUOUS_SAME_BAR_EXIT", codes)
 
+    def test_report_json_is_byte_stable(self):
+        rows = [
+            {"timestamp":"2026-01-01T00:00:00Z","open":"10","high":"12","low":"9","close":"11"},
+        ]
+        a = audit_ohlcv_rows(rows)
+        b = audit_ohlcv_rows(rows)
+        self.assertEqual(a.to_json(), b.to_json())
+        self.assertIn('"report_schema_version":"1.0"', a.to_json())
+        self.assertIn('"tool_version":"0.2.0"', a.to_json())
+
+    def test_optional_input_sha256_is_emitted(self):
+        report = audit_ohlcv_rows([
+            {"timestamp":"2026-01-01T00:00:00Z","open":"10","high":"12","low":"9","close":"11"},
+        ])
+        report.input_sha256 = "a" * 64
+        rendered = report.to_json()
+        self.assertIn('"input_sha256":"' + ("a" * 64) + '"', rendered)
+
     def test_manifest_round_trip(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)

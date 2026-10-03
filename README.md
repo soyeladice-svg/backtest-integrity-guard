@@ -29,6 +29,7 @@ python -m pip install -e .
 btguard ohlcv examples/ohlcv.csv
 btguard ohlcv vendor.csv --map schema.json
 btguard ohlcv bars.csv --interval-seconds 300 --allow-gaps allowed_gaps.json
+btguard ohlcv bars.csv --hash-input
 btguard ledger examples/trades.csv
 btguard freeze examples/ohlcv.csv examples/trades.csv -o manifest.json --root .
 btguard verify manifest.json --root .
@@ -62,13 +63,15 @@ For cadence checks, declare the expected bar interval. Missing bars and irregula
 
 An allowlisted break is reported as ALLOWED_SESSION_GAP with warning severity while the audit remains PASS.
 
+Audit JSON uses a stable schema identifier, includes the tool version, and is serialized deterministically for byte-for-byte comparison. Use --hash-input when the report should also bind itself to the exact audited file via SHA256.
+
 ## Why
 
 Backtests can look profitable while silently consuming incomplete bars, executing on the signal bar, changing frozen inputs, or resolving an intrabar stop/target collision without an explicit policy. This project makes those assumptions machine-checkable.
 
 ## Scope
 
-Version 0.1 intentionally stays small and auditable. Planned additions include schema mapping, gap/session checks, deterministic report output, and adapters for common backtest ledgers.
+Version 0.2 focuses on auditable data integrity: schema mapping, cadence/session checks, deterministic report output, and optional SHA256 input binding. Future versions will extend execution-integrity checks and adapters.
 
 ## License
 
