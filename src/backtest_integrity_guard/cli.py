@@ -25,6 +25,7 @@ def main() -> int:
     a = sub.add_parser("ohlcv", help="audit OHLCV geometry and timestamps")
     a.add_argument("file", type=Path)
     a.add_argument("--timestamp", default="timestamp")
+    a.add_argument("--map", type=Path, help="JSON mapping of canonical fields to input column names")
 
     b = sub.add_parser("ledger", help="audit signal-to-execution causality")
     b.add_argument("file", type=Path)
@@ -43,7 +44,12 @@ def main() -> int:
 
     args = p.parse_args()
     if args.command == "ohlcv":
-        return emit(audit_ohlcv_rows(read_csv(args.file), args.timestamp))
+        mapping = None
+        if args.map:
+            mapping = json.loads(args.map.read_text(encoding="utf-8"))
+            if not isinstance(mapping, dict):
+                raise SystemExit("--map must contain a JSON object")
+        return emit(audit_ohlcv_rows(read_csv(args.file), args.timestamp, mapping))
     if args.command == "ledger":
         return emit(audit_trade_rows(read_csv(args.file), args.signal_close, args.entry, args.next_open))
     if args.command == "freeze":

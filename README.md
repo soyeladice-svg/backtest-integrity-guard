@@ -27,12 +27,27 @@ python -m pip install -e .
 
 ```bash
 btguard ohlcv examples/ohlcv.csv
+btguard ohlcv vendor.csv --map schema.json
 btguard ledger examples/trades.csv
 btguard freeze examples/ohlcv.csv examples/trades.csv -o manifest.json --root .
 btguard verify manifest.json --root .
 ```
 
 The command exits non-zero when an integrity error is found, so it can be used in CI.
+
+For vendor-specific schemas, pass a JSON mapping from canonical field names to input columns:
+
+~~~json
+{
+  "timestamp": "ts",
+  "open": "o",
+  "high": "h",
+  "low": "l",
+  "close": "c",
+  "volume": "qty"
+}
+~~~
+
 
 ## Why
 

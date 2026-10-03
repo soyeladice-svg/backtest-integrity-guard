@@ -58,14 +58,31 @@ def _float(row: Mapping[str, str], key: str) -> float:
 def audit_ohlcv_rows(
     rows: Iterable[Mapping[str, str]],
     timestamp_field: str = "timestamp",
+    field_map: Mapping[str, str] | None = None,
 ) -> AuditReport:
     findings: list[Finding] = []
     seen: set[datetime] = set()
     previous: datetime | None = None
+    names = {
+        "timestamp": timestamp_field,
+        "open": "open",
+        "high": "high",
+        "low": "low",
+        "close": "close",
+        "volume": "volume",
+        **(dict(field_map) if field_map else {}),
+    }
 
     for n, row in enumerate(rows, start=2):
+        missing = [k for k in ("timestamp", "open", "high", "low", "close") if names[k] not in row]
+        if missing:
+            findings.append(Finding(
+                "ERROR", "MISSING_REQUIRED_FIELD", n,
+                ",".join(f"{k}->{names[k]}" for k in missing),
+            ))
+            continue
         try:
-            ts = parse_iso8601(row[timestamp_field])
+            ts = parse_iso8601(row[names["timestamp"]])
         except Exception as exc:
             findings.append(Finding("ERROR", "INVALID_TIMESTAMP", n, str(exc)))
             continue
@@ -78,7 +95,7 @@ def audit_ohlcv_rows(
         previous = ts
 
         try:
-            o, h, l, c = (_float(row, k) for k in ("open", "high", "low", "close"))
+            o, h, l, c = (_float(row, names[k]) for k in ("open", "high", "low", "close"))
         except Exception as exc:
             findings.append(Finding("ERROR", "INVALID_OHLC", n, str(exc)))
             continue
@@ -90,10 +107,11 @@ def audit_ohlcv_rows(
         if l > min(o, c):
             findings.append(Finding("ERROR", "LOW_ABOVE_BODY", n, f"l={l} o={o} c={c}"))
 
-        if "volume" in row and row["volume"] not in ("", None):
+        volume_field = names["volume"]
+        if volume_field in row and row[volume_field] not in ("", None):
             try:
-                if float(row["volume"]) < 0:
-                    findings.append(Finding("ERROR", "NEGATIVE_VOLUME", n, row["volume"]))
+                if float(row[volume_field]) < 0:
+                    findings.append(Finding("ERROR", "NEGATIVE_VOLUME", n, row[volume_field]))
             except Exception as exc:
                 findings.append(Finding("ERROR", "INVALID_VOLUME", n, str(exc)))
 

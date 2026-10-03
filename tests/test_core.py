@@ -16,6 +16,25 @@ class IntegrityTests(unittest.TestCase):
         ]
         self.assertEqual(audit_ohlcv_rows(rows).status, "PASS")
 
+    def test_alternate_schema_mapping_passes(self):
+        rows = [
+            {"ts":"2026-01-01T00:00:00Z","o":"10","h":"12","l":"9","c":"11","qty":"100"},
+        ]
+        report = audit_ohlcv_rows(rows, field_map={
+            "timestamp":"ts", "open":"o", "high":"h", "low":"l", "close":"c", "volume":"qty"
+        })
+        self.assertEqual(report.status, "PASS")
+
+    def test_missing_mapped_required_field_fails_closed(self):
+        rows = [
+            {"ts":"2026-01-01T00:00:00Z","o":"10","h":"12","c":"11"},
+        ]
+        report = audit_ohlcv_rows(rows, field_map={
+            "timestamp":"ts", "open":"o", "high":"h", "low":"l", "close":"c"
+        })
+        codes = {x.code for x in report.findings}
+        self.assertIn("MISSING_REQUIRED_FIELD", codes)
+
     def test_bad_ohlcv_fails(self):
         rows = [{"timestamp":"2026-01-01T00:00:00Z","open":"10","high":"9","low":"11","close":"10","volume":"-1"}]
         report = audit_ohlcv_rows(rows)
