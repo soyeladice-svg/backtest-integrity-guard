@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, asdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 import hashlib
 import json
@@ -59,10 +59,19 @@ def audit_ohlcv_rows(
     rows: Iterable[Mapping[str, str]],
     timestamp_field: str = "timestamp",
     field_map: Mapping[str, str] | None = None,
+    expected_interval_seconds: int | None = None,
+    allowed_gaps: Iterable[tuple[datetime, datetime]] | None = None,
 ) -> AuditReport:
     findings: list[Finding] = []
     seen: set[datetime] = set()
     previous: datetime | None = None
+    if expected_interval_seconds is not None and expected_interval_seconds <= 0:
+        raise ValueError("expected_interval_seconds must be positive")
+    expected = (
+        timedelta(seconds=expected_interval_seconds)
+        if expected_interval_seconds is not None else None
+    )
+    allowed = set(allowed_gaps or ())
     names = {
         "timestamp": timestamp_field,
         "open": "open",
@@ -91,6 +100,28 @@ def audit_ohlcv_rows(
             findings.append(Finding("ERROR", "DUPLICATE_TIMESTAMP", n, str(ts)))
         if previous is not None and ts <= previous:
             findings.append(Finding("ERROR", "NON_MONOTONIC_TIME", n, str(ts)))
+        elif previous is not None and expected is not None:
+            delta = ts - previous
+            if delta != expected:
+                if (previous, ts) in allowed:
+                    findings.append(Finding(
+                        "WARNING", "ALLOWED_SESSION_GAP", n,
+                        f"from={previous.isoformat()} to={ts.isoformat()} seconds={int(delta.total_seconds())}",
+                    ))
+                elif delta > expected and delta.total_seconds() % expected.total_seconds() == 0:
+                    missing = int(delta / expected) - 1
+                    findings.append(Finding(
+                        "ERROR", "MISSING_BARS", n,
+                        f"missing={missing} expected_interval_seconds={expected_interval_seconds} "
+                        f"from={previous.isoformat()} to={ts.isoformat()}",
+                    ))
+                else:
+                    findings.append(Finding(
+                        "ERROR", "IRREGULAR_BAR_INTERVAL", n,
+                        f"expected_seconds={expected_interval_seconds} "
+                        f"actual_seconds={delta.total_seconds():g} "
+                        f"from={previous.isoformat()} to={ts.isoformat()}",
+                    ))
         seen.add(ts)
         previous = ts
 

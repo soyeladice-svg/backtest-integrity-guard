@@ -5,7 +5,7 @@ import csv
 import json
 from pathlib import Path
 
-from .core import audit_ohlcv_rows, audit_trade_rows, build_manifest, verify_manifest
+from .core import audit_ohlcv_rows, audit_trade_rows, build_manifest, verify_manifest, parse_iso8601
 
 
 def read_csv(path: Path):
@@ -26,6 +26,11 @@ def main() -> int:
     a.add_argument("file", type=Path)
     a.add_argument("--timestamp", default="timestamp")
     a.add_argument("--map", type=Path, help="JSON mapping of canonical fields to input column names")
+    a.add_argument("--interval-seconds", type=int, help="Expected bar cadence in seconds")
+    a.add_argument(
+        "--allow-gaps", type=Path,
+        help="JSON list of explicit [from_timestamp, to_timestamp] session breaks",
+    )
 
     b = sub.add_parser("ledger", help="audit signal-to-execution causality")
     b.add_argument("file", type=Path)
@@ -49,7 +54,30 @@ def main() -> int:
             mapping = json.loads(args.map.read_text(encoding="utf-8"))
             if not isinstance(mapping, dict):
                 raise SystemExit("--map must contain a JSON object")
-        return emit(audit_ohlcv_rows(read_csv(args.file), args.timestamp, mapping))
+
+        allowed_gaps = None
+        if args.allow_gaps:
+            raw = json.loads(args.allow_gaps.read_text(encoding="utf-8"))
+            if not isinstance(raw, list):
+                raise SystemExit("--allow-gaps must contain a JSON list")
+            try:
+                allowed_gaps = {
+                    (parse_iso8601(pair[0]), parse_iso8601(pair[1]))
+                    for pair in raw
+                    if isinstance(pair, list) and len(pair) == 2
+                }
+            except Exception as exc:
+                raise SystemExit(f"invalid --allow-gaps entry: {exc}") from exc
+            if len(allowed_gaps) != len(raw):
+                raise SystemExit("each --allow-gaps entry must be [from_timestamp, to_timestamp]")
+
+        return emit(audit_ohlcv_rows(
+            read_csv(args.file),
+            args.timestamp,
+            mapping,
+            args.interval_seconds,
+            allowed_gaps,
+        ))
     if args.command == "ledger":
         return emit(audit_trade_rows(read_csv(args.file), args.signal_close, args.entry, args.next_open))
     if args.command == "freeze":

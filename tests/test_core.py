@@ -35,6 +35,45 @@ class IntegrityTests(unittest.TestCase):
         codes = {x.code for x in report.findings}
         self.assertIn("MISSING_REQUIRED_FIELD", codes)
 
+    def test_missing_bars_are_counted(self):
+        rows = [
+            {"timestamp":"2026-01-01T00:00:00Z","open":"10","high":"12","low":"9","close":"11"},
+            {"timestamp":"2026-01-01T00:15:00Z","open":"11","high":"13","low":"10","close":"12"},
+        ]
+        report = audit_ohlcv_rows(rows, expected_interval_seconds=300)
+        hits = [x for x in report.findings if x.code == "MISSING_BARS"]
+        self.assertEqual(len(hits), 1)
+        self.assertIn("missing=2", hits[0].message)
+        self.assertEqual(report.status, "FAIL")
+
+    def test_explicit_session_gap_is_allowed(self):
+        from backtest_integrity_guard.core import parse_iso8601
+        start = parse_iso8601("2026-01-02T16:00:00Z")
+        end = parse_iso8601("2026-01-05T09:30:00Z")
+        rows = [
+            {"timestamp":"2026-01-02T16:00:00Z","open":"10","high":"12","low":"9","close":"11"},
+            {"timestamp":"2026-01-05T09:30:00Z","open":"11","high":"13","low":"10","close":"12"},
+        ]
+        report = audit_ohlcv_rows(
+            rows,
+            expected_interval_seconds=300,
+            allowed_gaps={(start, end)},
+        )
+        self.assertEqual(report.status, "PASS")
+        self.assertEqual([x.code for x in report.findings], ["ALLOWED_SESSION_GAP"])
+
+    def test_irregular_interval_is_distinct(self):
+        rows = [
+            {"timestamp":"2026-01-01T00:00:00Z","open":"10","high":"12","low":"9","close":"11"},
+            {"timestamp":"2026-01-01T00:07:00Z","open":"11","high":"13","low":"10","close":"12"},
+        ]
+        codes = {
+            x.code for x in audit_ohlcv_rows(
+                rows, expected_interval_seconds=300
+            ).findings
+        }
+        self.assertIn("IRREGULAR_BAR_INTERVAL", codes)
+
     def test_bad_ohlcv_fails(self):
         rows = [{"timestamp":"2026-01-01T00:00:00Z","open":"10","high":"9","low":"11","close":"10","volume":"-1"}]
         report = audit_ohlcv_rows(rows)
