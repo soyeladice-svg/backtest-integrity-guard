@@ -74,6 +74,22 @@ def _float(row: Mapping[str, str], key: str) -> float:
     return float(row[key])
 
 
+def _canonical_bar(
+    row: Mapping[str, str], names: Mapping[str, str]
+) -> tuple[float, float, float, float, float | None] | None:
+    try:
+        o, h, l, c = (_float(row, names[k]) for k in ("open", "high", "low", "close"))
+        volume_field = names["volume"]
+        volume = (
+            float(row[volume_field])
+            if volume_field in row and row[volume_field] not in ("", None)
+            else None
+        )
+        return o, h, l, c, volume
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
 def audit_ohlcv_rows(
     rows: Iterable[Mapping[str, str]],
     timestamp_field: str = "timestamp",
@@ -82,7 +98,7 @@ def audit_ohlcv_rows(
     allowed_gaps: Iterable[tuple[datetime, datetime]] | None = None,
 ) -> AuditReport:
     findings: list[Finding] = []
-    seen: set[datetime] = set()
+    seen: dict[datetime, tuple[float, float, float, float, float | None] | None] = {}
     previous: datetime | None = None
     if expected_interval_seconds is not None and expected_interval_seconds <= 0:
         raise ValueError("expected_interval_seconds must be positive")
@@ -115,8 +131,13 @@ def audit_ohlcv_rows(
             findings.append(Finding("ERROR", "INVALID_TIMESTAMP", n, str(exc)))
             continue
 
+        canonical_bar = _canonical_bar(row, names)
         if ts in seen:
             findings.append(Finding("ERROR", "DUPLICATE_TIMESTAMP", n, str(ts)))
+            if canonical_bar is not None and canonical_bar == seen[ts]:
+                findings.append(Finding("ERROR", "DUPLICATE_BAR_ROW", n, str(ts)))
+            else:
+                findings.append(Finding("ERROR", "TIMESTAMP_CONFLICT", n, str(ts)))
         if previous is not None and ts <= previous:
             findings.append(Finding("ERROR", "NON_MONOTONIC_TIME", n, str(ts)))
         elif previous is not None and expected is not None:
@@ -141,7 +162,8 @@ def audit_ohlcv_rows(
                         f"actual_seconds={delta.total_seconds():g} "
                         f"from={previous.isoformat()} to={ts.isoformat()}",
                     ))
-        seen.add(ts)
+        if ts not in seen:
+            seen[ts] = canonical_bar
         previous = ts
 
         try:
