@@ -1,6 +1,7 @@
 # Backtest Integrity Guard
 
 [![tests](https://github.com/suguobin2021/backtest-integrity-guard/actions/workflows/test.yml/badge.svg)](https://github.com/suguobin2021/backtest-integrity-guard/actions/workflows/test.yml)
+[![PyPI version](https://img.shields.io/pypi/v/backtest-integrity-guard.svg)](https://pypi.org/project/backtest-integrity-guard/)
 
 A small, dependency-free Python CLI for catching common integrity failures in quantitative backtests before performance metrics are trusted.
 
@@ -8,14 +9,16 @@ It focuses on **causality, data integrity, explicit ambiguity handling, and repr
 
 ## Install
 
-### From the v0.2.1 release wheel
+### From PyPI
 
 ~~~bash
-python -m pip install "https://github.com/suguobin2021/backtest-integrity-guard/releases/download/v0.2.1/backtest_integrity_guard-0.2.1-py3-none-any.whl"
+python -m pip install backtest-integrity-guard
 btguard --help
 ~~~
 
-The release also includes a source archive and SHA256SUMS.
+### From a GitHub release
+
+The GitHub release includes a wheel, source archive, and SHA256SUMS for users who want to verify exact artifacts.
 
 ### From source
 

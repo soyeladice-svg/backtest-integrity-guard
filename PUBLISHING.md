@@ -18,12 +18,11 @@ Important: a pending publisher does not reserve the project name until the first
 
 ## First publication
 
-After the pending publisher is configured on PyPI:
+The first Trusted Publishing run completed successfully for v0.2.1, which created the PyPI project. The package is now installable with:
 
-1. Open GitHub Actions.
-2. Select the **publish** workflow.
-3. Run it manually on main.
-4. Confirm that PyPI created the project and uploaded the current version.
+~~~bash
+python -m pip install backtest-integrity-guard
+~~~
 
 ## Future releases
 
