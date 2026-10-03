@@ -1,5 +1,7 @@
 # Backtest Integrity Guard
 
+[![tests](https://github.com/suguobin2021/backtest-integrity-guard/actions/workflows/test.yml/badge.svg)](https://github.com/suguobin2021/backtest-integrity-guard/actions/workflows/test.yml)
+
 A small, dependency-free Python CLI for detecting common integrity failures in quantitative backtests before performance metrics are trusted.
 
 ## What it checks
