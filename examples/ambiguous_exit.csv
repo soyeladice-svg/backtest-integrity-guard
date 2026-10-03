@@ -1,0 +1,2 @@
+signal_bar_close,next_bar_open,entry_time,stop_hit,target_hit,same_bar_policy
+2026-01-01T00:05:00Z,2026-01-01T00:10:00Z,2026-01-01T00:10:00Z,true,true,

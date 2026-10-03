@@ -109,6 +109,10 @@ Backtest Integrity Guard intentionally does **not** contain:
 
 The goal is to make research assumptions machine-checkable without depending on any particular strategy.
 
+## Guides
+
+- [Three backtest integrity failures worth catching before you trust performance](docs/three-backtest-integrity-failures.md)
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports should include the smallest synthetic example that reproduces the problem.
