@@ -3,6 +3,7 @@ import json
 import tempfile
 import unittest
 
+from backtest_integrity_guard import __version__
 from backtest_integrity_guard.core import (
     audit_ohlcv_rows, audit_trade_rows, build_manifest, verify_manifest,
 )
@@ -140,7 +141,7 @@ class IntegrityTests(unittest.TestCase):
         b = audit_ohlcv_rows(rows)
         self.assertEqual(a.to_json(), b.to_json())
         self.assertIn('"report_schema_version":"1.0"', a.to_json())
-        self.assertIn('"tool_version":"0.2.2"', a.to_json())
+        self.assertIn(f'"tool_version":"{__version__}"', a.to_json())
 
     def test_optional_input_sha256_is_emitted(self):
         report = audit_ohlcv_rows([

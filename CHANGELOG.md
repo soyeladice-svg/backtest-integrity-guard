@@ -2,6 +2,19 @@
 
 All notable changes to Backtest Integrity Guard are documented here.
 
+## [0.2.3] - 2026-10-05
+
+### Added
+- Add `btguard --version` so users can print the installed package version without a subcommand or network access.
+- Add CLI coverage ensuring `btguard --version` exits successfully and matches the package version.
+
+### Changed
+- Release smoke testing now verifies both `btguard --help` and `btguard --version`.
+- Version-bearing JSON stability coverage now follows the package version instead of a release-specific literal.
+
+### Contributors
+- Thanks to [@sarel-myburgh](https://github.com/sarel-myburgh) for implementing `btguard --version` in PR #24.
+
 ## [0.2.2] - 2026-10-03
 
 ### Added
