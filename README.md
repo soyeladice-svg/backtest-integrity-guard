@@ -17,6 +17,7 @@ It focuses on **causality, data integrity, explicit ambiguity handling, and repr
 ~~~bash
 python -m pip install backtest-integrity-guard
 btguard --help
+btguard --version
 ~~~
 
 ### From a GitHub release

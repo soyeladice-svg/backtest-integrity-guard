@@ -5,6 +5,7 @@ import csv
 import json
 from pathlib import Path
 
+from . import __version__
 from .core import audit_ohlcv_rows, audit_trade_rows, build_manifest, verify_manifest, parse_iso8601, sha256_file
 
 
@@ -20,6 +21,9 @@ def emit(report) -> int:
 
 def main() -> int:
     p = argparse.ArgumentParser(prog="btguard")
+    # Registered before the required subparsers so a bare `btguard --version`
+    # works without a subcommand on Python 3.10, 3.11 and 3.12.
+    p.add_argument("--version", action="version", version=__version__)
     sub = p.add_subparsers(dest="command", required=True)
 
     a = sub.add_parser("ohlcv", help="audit OHLCV geometry and timestamps")
