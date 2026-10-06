@@ -41,6 +41,32 @@ class ConfigTests(unittest.TestCase):
                 self.assertIsInstance(json.loads(result.stdout), dict)
                 self.assertEqual(result.stderr, "")
 
+
+    def run_interval(self, value):
+        env = dict(os.environ, PYTHONPATH=str(ROOT / "src"))
+        return subprocess.run(
+            [sys.executable, "-m", "backtest_integrity_guard.cli", "ohlcv",
+             str(ROOT / "examples" / "ohlcv.csv"), "--interval-seconds", str(value)],
+            capture_output=True, text=True, env=env, timeout=10,
+        )
+
+    def test_non_positive_interval_is_a_concise_cli_error(self):
+        for value in (0, -1):
+            with self.subTest(value=value):
+                result = self.run_interval(value)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(result.stdout, "")
+                self.assertIn("--interval-seconds", result.stderr)
+                self.assertIn("must be greater than zero", result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+
+    def test_positive_interval_still_emits_a_report(self):
+        result = self.run_interval(300)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIsInstance(json.loads(result.stdout), dict)
+        self.assertEqual(result.stderr, "")
+
+
     def test_semantic_validation_is_preserved(self):
         cases = (
             ("--map", "[]", "--map must contain a JSON object"),
