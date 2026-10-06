@@ -9,6 +9,13 @@ from . import __version__
 from .core import audit_ohlcv_rows, audit_trade_rows, build_manifest, verify_manifest, parse_iso8601, sha256_file
 
 
+def positive_int(value: str) -> int:
+    parsed = int(value)
+    if parsed <= 0:
+        raise argparse.ArgumentTypeError("must be greater than zero")
+    return parsed
+
+
 def read_csv(path: Path):
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         yield from csv.DictReader(handle)
@@ -30,7 +37,7 @@ def main() -> int:
     a.add_argument("file", type=Path)
     a.add_argument("--timestamp", default="timestamp")
     a.add_argument("--map", type=Path, help="JSON mapping of canonical fields to input column names")
-    a.add_argument("--interval-seconds", type=int, help="Expected bar cadence in seconds")
+    a.add_argument("--interval-seconds", type=positive_int, help="Expected bar cadence in seconds")
     a.add_argument(
         "--allow-gaps", type=Path,
         help="JSON list of explicit [from_timestamp, to_timestamp] session breaks",
