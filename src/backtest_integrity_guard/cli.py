@@ -122,7 +122,13 @@ def main() -> int:
         args.output.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
         print(args.output)
         return 0
-    return emit(verify_manifest(args.manifest, args.root))
+    try:
+        report = verify_manifest(args.manifest, args.root)
+    except json.JSONDecodeError as exc:
+        raise SystemExit(
+            f"invalid manifest JSON: {exc.msg} at line {exc.lineno} column {exc.colno}"
+        ) from None
+    return emit(report)
 
 
 if __name__ == "__main__":
