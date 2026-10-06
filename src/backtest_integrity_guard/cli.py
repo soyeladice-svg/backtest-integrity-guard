@@ -26,6 +26,12 @@ def emit(report) -> int:
     return 1 if report.errors else 0
 
 
+def require_existing_file(path: Path) -> Path:
+    if not path.is_file():
+        raise SystemExit(f"input file not found: {path}")
+    return path
+
+
 def main() -> int:
     p = argparse.ArgumentParser(prog="btguard")
     # Registered before the required subparsers so a bare `btguard --version`
@@ -62,6 +68,7 @@ def main() -> int:
 
     args = p.parse_args()
     if args.command == "ohlcv":
+        require_existing_file(args.file)
         mapping = None
         if args.map:
             try:
@@ -105,6 +112,7 @@ def main() -> int:
             report.input_sha256 = sha256_file(args.file)
         return emit(report)
     if args.command == "ledger":
+        require_existing_file(args.file)
         report = audit_trade_rows(read_csv(args.file), args.signal_close, args.entry, args.next_open)
         if args.hash_input:
             report.input_sha256 = sha256_file(args.file)
