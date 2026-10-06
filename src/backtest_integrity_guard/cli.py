@@ -57,13 +57,23 @@ def main() -> int:
     if args.command == "ohlcv":
         mapping = None
         if args.map:
-            mapping = json.loads(args.map.read_text(encoding="utf-8"))
+            try:
+                mapping = json.loads(args.map.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as exc:
+                raise SystemExit(
+                    f"invalid --map JSON: {exc.msg} at line {exc.lineno} column {exc.colno}"
+                ) from None
             if not isinstance(mapping, dict):
                 raise SystemExit("--map must contain a JSON object")
 
         allowed_gaps = None
         if args.allow_gaps:
-            raw = json.loads(args.allow_gaps.read_text(encoding="utf-8"))
+            try:
+                raw = json.loads(args.allow_gaps.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as exc:
+                raise SystemExit(
+                    f"invalid --allow-gaps JSON: {exc.msg} at line {exc.lineno} column {exc.colno}"
+                ) from None
             if not isinstance(raw, list):
                 raise SystemExit("--allow-gaps must contain a JSON list")
             try:
