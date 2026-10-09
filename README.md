@@ -36,6 +36,18 @@ python -m pip install -e .
 
 Audit ordinary OHLCV data:
 
+The default completion policy is **warning-only** for rows marked `complete=false`,
+`0`, or `no`. To require explicit evidence that every bar is finished,
+use `--bar-completion require-complete`; missing or ambiguous markers then
+fail the audit with `BAR_COMPLETION_UNVERIFIED`, and explicitly incomplete
+rows fail with `INCOMPLETE_BAR` (a per-row `ERROR`). The CLI does not
+infer completion from clock time or future market data.
+
+~~~bash
+btguard ohlcv examples/ohlcv.csv --bar-completion require-complete
+~~~
+
+
 ~~~bash
 btguard ohlcv examples/ohlcv.csv --hash-input
 ~~~
