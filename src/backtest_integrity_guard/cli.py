@@ -49,6 +49,10 @@ def main() -> int:
         help="JSON list of explicit [from_timestamp, to_timestamp] session breaks",
     )
     a.add_argument("--hash-input", action="store_true", help="Include SHA256 of the audited input")
+    a.add_argument(
+        "--bar-completion", choices=("warn", "require-complete"), default="warn",
+        help="Fail closed unless each row explicitly confirms completion (require-complete)",
+    )
 
     b = sub.add_parser("ledger", help="audit signal-to-execution causality")
     b.add_argument("file", type=Path)
@@ -107,6 +111,7 @@ def main() -> int:
             mapping,
             args.interval_seconds,
             allowed_gaps,
+            args.bar_completion,
         )
         if args.hash_input:
             report.input_sha256 = sha256_file(args.file)
