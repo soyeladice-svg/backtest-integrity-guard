@@ -96,10 +96,13 @@ def audit_ohlcv_rows(
     field_map: Mapping[str, str] | None = None,
     expected_interval_seconds: int | None = None,
     allowed_gaps: Iterable[tuple[datetime, datetime]] | None = None,
+    bar_completion: str = "warn",
 ) -> AuditReport:
     findings: list[Finding] = []
     seen: dict[datetime, tuple[float, float, float, float, float | None] | None] = {}
     previous: datetime | None = None
+    if bar_completion not in ("warn", "require-complete"):
+        raise ValueError("bar_completion must be warn or require-complete")
     if expected_interval_seconds is not None and expected_interval_seconds <= 0:
         raise ValueError("expected_interval_seconds must be positive")
     expected = (
@@ -187,7 +190,18 @@ def audit_ohlcv_rows(
             except Exception as exc:
                 findings.append(Finding("ERROR", "INVALID_VOLUME", n, str(exc)))
 
-        if "complete" in row and str(row["complete"]).strip().lower() in {"false", "0", "no"}:
+        complete = str(row.get("complete", "")).strip().lower()
+        if bar_completion == "require-complete":
+            if complete in {"true", "1", "yes"}:
+                pass
+            elif complete in {"false", "0", "no"}:
+                findings.append(Finding("ERROR", "INCOMPLETE_BAR", n, "bar is marked incomplete"))
+            else:
+                findings.append(Finding(
+                    "ERROR", "BAR_COMPLETION_UNVERIFIED", n,
+                    "complete must explicitly be true, 1, or yes in require-complete mode",
+                ))
+        elif complete in {"false", "0", "no"}:
             findings.append(Finding("WARNING", "INCOMPLETE_BAR", n, "bar is marked incomplete"))
 
     return AuditReport(findings)
