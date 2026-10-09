@@ -151,6 +151,44 @@ class IntegrityTests(unittest.TestCase):
         rendered = report.to_json()
         self.assertIn('"input_sha256":"' + ("a" * 64) + '"', rendered)
 
+    def test_default_incomplete_bar_remains_warning(self):
+        row = {"timestamp": "2026-01-01T00:00:00Z", "open": "10", "high": "12",
+               "low": "9", "close": "11", "complete": "false"}
+        report = audit_ohlcv_rows([row])
+        self.assertEqual(report.status, "PASS")
+        self.assertEqual(report.findings[-1].severity, "WARNING")
+        self.assertEqual(report.findings[-1].code, "INCOMPLETE_BAR")
+        self.assertEqual(report.findings[-1].row, 2)
+
+    def test_strict_bar_completion_refuses_incomplete_and_missing_marker(self):
+        base = {"timestamp": "2026-01-01T00:00:00Z", "open": "10", "high": "12",
+                "low": "9", "close": "11"}
+        for complete, code in (("false", "INCOMPLETE_BAR"), ("0", "INCOMPLETE_BAR"),
+                               ("no", "INCOMPLETE_BAR"), ("maybe", "BAR_COMPLETION_UNVERIFIED"),
+                               (None, "BAR_COMPLETION_UNVERIFIED")):
+            with self.subTest(complete=complete):
+                row = dict(base)
+                if complete is not None:
+                    row["complete"] = complete
+                report = audit_ohlcv_rows([row], bar_completion="require-complete")
+                self.assertEqual(report.status, "FAIL")
+                hit = next(x for x in report.findings if x.code == code)
+                self.assertEqual(hit.severity, "ERROR")
+                self.assertEqual(hit.row, 2)
+
+    def test_explicitly_complete_bar_passes_strict(self):
+        base = {"timestamp": "2026-01-01T00:00:00Z", "open": "10", "high": "12",
+                "low": "9", "close": "11"}
+        for complete in ("true", "1", "yes", " TRUE "):
+            with self.subTest(complete=complete):
+                self.assertEqual(audit_ohlcv_rows(
+                    [{**base, "complete": complete}], bar_completion="require-complete"
+                ).status, "PASS")
+
+    def test_invalid_completion_policy_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "bar_completion"):
+            audit_ohlcv_rows([], bar_completion="ignore")
+
     def test_manifest_round_trip(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
